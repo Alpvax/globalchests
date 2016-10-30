@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Global Chests Mod|Dashboard</title>
+		<title>Global Chests Mod | Dashboard</title>
 		<!-- <link rel="stylesheet" type="text/css" href="table.css"></link> -->
         <script src="https://www.gstatic.com/firebasejs/3.5.2/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/3.5.2/firebase-auth.js"></script>
@@ -18,10 +18,34 @@
             firebase.initializeApp(config);
             var database = firebase.database();
         </script>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-		<!-- <script type="text/javascript" src="minecraftutils.js"></script> -->
+        <script src="https://www.gstatic.com/firebasejs/ui/live/0.5/firebase-ui-auth.js"></script>
+        <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/live/0.5/firebase-ui-auth.css" />
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="MCUtils.js"></script>
+        <script>
+            function mcLogin()
+            {
+                $.ajax({
+                    url: 'https://authserver.mojang.com/authenticate',
+                    type: 'post',
+                    dataType: 'json',
+                    success: function (data){
+                        $('#result').html(data);
+                    },
+                    data: '{"agent":{"name":"Minecraft","version":1},"username":"' + $('#username').val() + '","password":"' + $('#password').val() + '","clientToken":"1","requestUser":true}'
+                });
+            }
+        </script>
 	</head>
 	<body>
 		<h1>Website under construction, please return later.</h1>
+        <div id="mc-login">
+            Minecraft username/email:
+            <input type="text" id="username"></input>
+            Minecraft password:
+            <input type="password" class="password"></input>
+            <input type="button" value="Submit" onclick="mcLogin()"></input>
+            <div id="result"></div>
+        </div>
 	</body>
 </html>
