@@ -86,7 +86,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     
-    compile fileTree(dir:"${minecraft.runDir}/mods/", include: 'firebase-client-minecraft-*.jar')
+    compile 'com.firebase:firebase-client-jvm:2.5.2+'
 }
 
 repositories {
