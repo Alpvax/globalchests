@@ -2,7 +2,7 @@ package alpvax.globalchests.block.item;
 
 import java.util.List;
 
-import alpvax.globalchests.core.GlobalChestsHelper;
+import alpvax.globalchests.inventory.GlobalChestsHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.SoundType;
