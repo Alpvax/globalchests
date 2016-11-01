@@ -1,0 +1,2 @@
+mod.globalchests.name=Global Chests
+mod.globalchests.description=A mod which adds inventories which synchronise their contents across worlds.
