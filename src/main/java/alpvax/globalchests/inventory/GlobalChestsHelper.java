@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.firebase.client.Firebase;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 
 public class GlobalChestsHelper
@@ -38,9 +39,10 @@ public class GlobalChestsHelper
 		instance.loadedInventories.remove(key);
 	}
 
-	public static InventorySynched newInventory(int size, String name)
+	public static InventorySynched newInventory(int size, String name, EntityPlayer owner)
 	{
 		Firebase ref = instance.inventories.push();
+		ref.child("owner").setValue(owner.getGameProfile().getId());
 		ref.child("name").setValue(name);
 		ref.child("size").setValue(Integer.valueOf(size));
 		return getInventory(ref.getKey());
