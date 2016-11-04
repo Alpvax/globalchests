@@ -10,6 +10,14 @@ import net.minecraft.item.ItemStack;
 
 public class GlobalChestsHelper
 {
+	public static class Permissions
+	{
+		public static final int VIEW = 0b1;
+		public static final int DEPOSIT = 0b10;
+		public static final int WITHDRAW = 0b100;
+
+	}
+
 	private static GlobalChestsHelper instance;
 
 	private Firebase root;

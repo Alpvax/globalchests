@@ -1,5 +1,6 @@
 package alpvax.globalchests.inventory;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Level;
@@ -9,7 +10,9 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
+import com.google.common.collect.Maps;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.items.IItemHandler;
@@ -23,6 +26,7 @@ public class InventorySynched implements IItemHandler
 	private String name;
 	private int size;
 	private ItemStack[] items;
+	private Map<String, Integer> permissions = Maps.newHashMap();
 
 	private final String key;
 	private final Firebase invRef;
@@ -89,6 +93,37 @@ public class InventorySynched implements IItemHandler
 		public void onCancelled(FirebaseError err)
 		{}
 	};
+	private ChildEventListener permissionListener = new ChildEventListener()
+	{
+		@Override
+		public void onChildAdded(DataSnapshot snap, String arg1)
+		{
+			permissions.put(snap.getKey(), snap.getValue(Integer.class));
+		}
+
+		@Override
+		public void onChildChanged(DataSnapshot snap, String arg1)
+		{
+			permissions.put(snap.getKey(), snap.getValue(Integer.class));
+		}
+
+		@Override
+		public void onChildMoved(DataSnapshot snap, String arg1)
+		{
+			System.err.printf("Permission \"%s\" moved.%nSnapshot Key: %s%nArg1: %s%n", key, snap.getKey(), arg1);//XXX
+			//TODO:Modify items array;
+		}
+
+		@Override
+		public void onChildRemoved(DataSnapshot snap)
+		{
+			permissions.remove(snap.getKey());
+		}
+
+		@Override
+		public void onCancelled(FirebaseError err)
+		{}
+	};
 
 	private ValueEventListener syncAllListener = new SimpleValueListener(snap -> {
 		owner = snap.child("owner").getValue(String.class);
@@ -109,6 +144,7 @@ public class InventorySynched implements IItemHandler
 		invRef.child("name").addValueEventListener(nameListener);
 		invRef.child("size").addValueEventListener(sizeListener);
 		invRef.child("items").addChildEventListener(itemListener);
+		invRef.child("permissions").addChildEventListener(permissionListener);
 	}
 
 	void removeListeners()
@@ -276,5 +312,16 @@ public class InventorySynched implements IItemHandler
 	{
 		if(slot < 0 || slot >= items.length)
 			throw new ArrayIndexOutOfBoundsException("Slot " + slot + " not in valid range - [0," + items.length + ")");
+	}
+
+	public int getPermissions(EntityPlayer player)
+	{
+		String id = player.getGameProfile().getId().toString();
+		if(id.equals(owner))
+		{
+			return GlobalChestsHelper.Permissions.VIEW | GlobalChestsHelper.Permissions.DEPOSIT | GlobalChestsHelper.Permissions.WITHDRAW;
+		}
+		Integer p = permissions.get(id);
+		return p == null ? 0 : p.intValue();
 	}
 }
