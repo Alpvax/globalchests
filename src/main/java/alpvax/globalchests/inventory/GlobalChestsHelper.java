@@ -7,6 +7,7 @@ import com.firebase.client.Firebase;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 
 public class GlobalChestsHelper
 {
@@ -15,28 +16,27 @@ public class GlobalChestsHelper
 		public static final int VIEW = 0b1;
 		public static final int DEPOSIT = 0b10;
 		public static final int WITHDRAW = 0b100;
-
+		public static final int MODIFY_PERMISSIONS = 0b1000;
 	}
 
-	private static GlobalChestsHelper instance;
+	private static GlobalChestsHelper instance = new GlobalChestsHelper();
 
 	private Firebase root;
 	private Firebase inventories;
-	private Map<String, InventorySynched> loadedInventories = new HashMap<>();
+	private Map<String, ItemHandlerSynched> loadedInventories = new HashMap<>();
 
-	GlobalChestsHelper()
+	private GlobalChestsHelper()
 	{
-		instance = this;
 		root = new Firebase("https://globalchests.firebaseio.com/");
 		inventories = root.child("inventory");
 	}
 
-	public static InventorySynched getInventory(String key)
+	public static ItemHandlerSynched getInventory(String key)
 	{
-		InventorySynched inv = instance.loadedInventories.get(key);
+		ItemHandlerSynched inv = instance.loadedInventories.get(key);
 		if(inv == null)
 		{
-			inv = new InventorySynched(key, instance.inventories.child(key));
+			inv = new ItemHandlerSynched(key, instance.inventories.child(key));
 			instance.loadedInventories.put(key, inv);
 		}
 		return inv;
@@ -47,7 +47,7 @@ public class GlobalChestsHelper
 		instance.loadedInventories.remove(key);
 	}
 
-	public static InventorySynched newInventory(int size, String name, EntityPlayer owner)
+	public static ItemHandlerSynched newInventory(int size, String name, EntityPlayer owner)
 	{
 		Firebase ref = instance.inventories.push();
 		ref.child("owner").setValue(owner.getGameProfile().getId());
@@ -56,15 +56,24 @@ public class GlobalChestsHelper
 		return getInventory(ref.getKey());
 	}
 
-	public static String getInventoryKey(ItemStack item)
+	public static String getInventoryKey(ItemStack stack)
 	{
-		//TODO:Get key
+		if(stack == null)
+		{
+			return null;
+		}
+		NBTTagCompound nbt = stack.getTagCompound();
+		if(nbt != null && nbt.hasKey(INVENTORY_KEY))
+		{
+			return nbt.getString(INVENTORY_KEY);
+		}
 		return null;
 	}
 
-	public static String getInventoryName(ItemStack item)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
+	/** NBT key for the inventory id */
+	public static final String INVENTORY_KEY = "GlobalInventoryID";
+	/** NBT key for most sig bits of UUID of owner of this item/tileentity */
+	public static final String INTERFACE_OWNER_MOST = "OwnerMost";
+	/** NBT key for least sig bits of UUID of owner of this item/tileentity */
+	public static final String INTERFACE_OWNER_LEAST = "OwnerLeast";
 }

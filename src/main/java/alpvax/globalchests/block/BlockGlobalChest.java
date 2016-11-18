@@ -17,10 +17,8 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.InventoryEnderChest;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityEnderChest;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -100,34 +98,29 @@ public class BlockGlobalChest extends BlockContainer
 	public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
 	{
 		worldIn.setBlockState(pos, state.withProperty(FACING, placer.getHorizontalFacing().getOpposite()), 2);
+		TileEntity tile = worldIn.getTileEntity(pos);
+		if(placer instanceof EntityPlayer && tile instanceof TileEntityGlobalChest)
+		{
+			((TileEntityGlobalChest)tile).setOwner((EntityPlayer)placer);
+		}
 	}
 
 	public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
 	{
-		InventoryEnderChest inventoryenderchest = playerIn.getInventoryEnderChest();
-		TileEntity tileentity = worldIn.getTileEntity(pos);
-
-		if(inventoryenderchest != null && tileentity instanceof TileEntityEnderChest)
+		TileEntity tile = worldIn.getTileEntity(pos);
+		if(tile instanceof TileEntityGlobalChest)
 		{
-			if(worldIn.getBlockState(pos.up()).isNormalCube())
+			TileEntityGlobalChest inv = (TileEntityGlobalChest)tile;
+			if(playerIn.isSneaking() && inv.canViewSettings(playerIn))
 			{
-				return true;
+				inv.displayGUISettings(playerIn);
 			}
-			else if(worldIn.isRemote)
+			else if(!worldIn.isRemote && !worldIn.getBlockState(pos.up()).isNormalCube())
 			{
-				return true;
-			}
-			else
-			{
-				inventoryenderchest.setChestTileEntity((TileEntityEnderChest)tileentity);
-				playerIn.displayGUIChest(inventoryenderchest);
-				return true;
+				inv.displayGUI(playerIn);
 			}
 		}
-		else
-		{
-			return true;
-		}
+		return true;
 	}
 
 	/**
@@ -135,7 +128,7 @@ public class BlockGlobalChest extends BlockContainer
 	 */
 	public TileEntity createNewTileEntity(World worldIn, int meta)
 	{
-		return new TileEntityEnderChest();
+		return new TileEntityGlobalChest();
 	}
 
 	@SideOnly(Side.CLIENT)

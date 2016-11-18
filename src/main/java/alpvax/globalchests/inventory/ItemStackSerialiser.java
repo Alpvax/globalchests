@@ -1,21 +1,39 @@
 package alpvax.globalchests.inventory;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.util.Map;
 
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.google.common.collect.Maps;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class ItemStackSerialiser
 {
 	public static ItemStack fromJSON(DataSnapshot snap)
+	{
+		return fromJSONComplete(snap);
+	}
+
+	public static void saveStack(Firebase ref, ItemStack stack)
+	{
+		saveStackComplete(ref, stack);
+	}
+
+
+	public static ItemStack fromJSONSimple(DataSnapshot snap)
+	{
+		return ItemStack.loadItemStackFromNBT(FirebaseNBTSerialiser.getNBT(snap));
+	}
+
+	public static void saveStackSimple(Firebase ref, ItemStack stack)
+	{
+		FirebaseNBTSerialiser.saveNBT(ref, stack.serializeNBT());
+	}
+
+	public static ItemStack fromJSONComplete(DataSnapshot snap)
 	{
 		Item item = Item.getByNameOrId(snap.child("id").getValue(String.class));
 		int damage = snap.child("Damage").getValue(Integer.class).intValue();
@@ -24,45 +42,36 @@ public class ItemStackSerialiser
 		{
 			return null;
 		}
-		NBTTagCompound capNBT = null;
-		if(snap.hasChild("ForgeCaps"))
-		{
-			try
-			{
-				capNBT = CompressedStreamTools.read(new DataInputStream(new ByteArrayInputStream(snap.child("ForgeCaps").getValue(String.class).getBytes())));
-			}
-			catch(IOException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+		NBTTagCompound capNBT = snap.hasChild("ForgeCaps") ? FirebaseNBTSerialiser.getNBT(snap.child("ForgeCaps")) : null;
+
 		ItemStack stack = new ItemStack(item, stackSize, damage >= 0 ? damage : 0, capNBT);
 
 		NBTTagCompound stackTagCompound = null;
 		if(snap.hasChild("tag"))
 		{
-			try
-			{
-				stackTagCompound = CompressedStreamTools.read(new DataInputStream(new ByteArrayInputStream(snap.child("tag").getValue(String.class).getBytes())));
-			}
-			catch(IOException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			stackTagCompound = FirebaseNBTSerialiser.getNBT(snap.child("tag"));
 			stack.getItem().updateItemStackNBT(stackTagCompound);
 		}
 		stack.setTagCompound(stackTagCompound);
 		return stack;
 	}
 
-	public static void setValue(Firebase ref, NBTTagCompound nbt)
+	public static void saveStackComplete(Firebase ref, ItemStack stack)
 	{
-		for(String key : nbt.getKeySet())
+		Map<String, Object> map = Maps.newHashMap();
+		map.put("id", stack.getItem().getRegistryName().toString());
+		map.put("Damage", stack.getItemDamage());
+		map.put("Count", stack.stackSize);
+		if(stack.hasTagCompound())
 		{
-			NBTBase tag = nbt.getTag(key);
-			ref.child(key).setValue(tag);
+			map.put("tag", FirebaseNBTSerialiser.getMapFromNBT(stack.getTagCompound()));
 		}
+		//Serialise capabilities
+		NBTTagCompound nbt = stack.serializeNBT();
+		if(nbt.hasKey("ForgeCaps"))
+		{
+			map.put("ForgeCaps", FirebaseNBTSerialiser.getMapFromNBT(nbt.getTag("ForgeCaps")));
+		}
+		ref.setValue(map);
 	}
 }
